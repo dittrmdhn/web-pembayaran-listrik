@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model level {
+  id_level   Int    @id @default(autoincrement())
+  nama_level String @db.VarChar(28)
+  user       user[]
+}
+
+model pelanggan {
+  id_pelanggan   Int          @id @default(autoincrement())
+  username       String       @db.VarChar(128)
+  password       String       @db.VarChar(128)
+  nomor_kwh      String       @db.VarChar(24)
+  nama_pelanggan String       @db.VarChar(124)
+  alamat         String       @db.VarChar(256)
+  id_tarif       Int
+  tarif          tarif        @relation(fields: [id_tarif], references: [id_tarif], onUpdate: Restrict, map: "pelanggan_ibfk_1")
+  pembayaran     pembayaran[]
+  penggunaan     penggunaan[]
+  tagihan        tagihan[]
+
+  @@index([id_tarif], map: "id_tarif")
+}
+
+model pembayaran {
+  id_pembayaran      Int       @id @default(autoincrement())
+  id_tagihan         Int
+  id_pelanggan       Int
+  tanggal_pembayaran String    @db.VarChar(24)
+  bulan_bayar        String    @db.VarChar(56)
+  biaya_admin        Int
+  total_bayar        Int
+  id_user            Int
+  tagihan            tagihan   @relation(fields: [id_tagihan], references: [id_tagihan], onUpdate: Restrict, map: "pembayaran_ibfk_1")
+  pelanggan          pelanggan @relation(fields: [id_pelanggan], references: [id_pelanggan], onUpdate: Restrict, map: "pembayaran_ibfk_2")
+  user               user      @relation(fields: [id_user], references: [id_user], onUpdate: Restrict, map: "pembayaran_ibfk_3")
+
+  @@index([id_tagihan], map: "id_tagihan")
+  @@index([id_pelanggan], map: "id_pelanggan")
+  @@index([id_user], map: "id_user")
+}
+
+model penggunaan {
+  id_penggunaan Int       @id @default(autoincrement())
+  id_pelanggan  Int
+  bulan         String    @db.VarChar(64)
+  tahun         String    @db.VarChar(8)
+  meter_awal    Int
+  meter_akhir   Int
+  pelanggan     pelanggan @relation(fields: [id_pelanggan], references: [id_pelanggan], onUpdate: Restrict, map: "penggunaan_ibfk_1")
+  tagihan       tagihan[]
+
+  @@index([id_pelanggan], map: "id_pelanggan")
+}
+
+model tagihan {
+  id_tagihan    Int          @id @default(autoincrement())
+  id_penggunaan Int
+  id_pelanggan  Int
+  bulan         String       @db.VarChar(64)
+  tahun         String       @db.VarChar(8)
+  jumlah_meter  Int
+  status        String       @db.VarChar(64)
+  pembayaran    pembayaran[]
+  penggunaan    penggunaan   @relation(fields: [id_penggunaan], references: [id_penggunaan], onUpdate: Restrict, map: "tagihan_ibfk_1")
+  pelanggan     pelanggan    @relation(fields: [id_pelanggan], references: [id_pelanggan], onUpdate: Restrict, map: "tagihan_ibfk_2")
+
+  @@index([id_penggunaan], map: "id_penggunaan")
+  @@index([id_pelanggan], map: "id_pelanggan")
+}
+
+model tarif {
+  id_tarif    Int         @id @default(autoincrement())
+  daya        Int
+  tarifperkwh Int
+  pelanggan   pelanggan[]
+}
+
+model user {
+  id_user    Int          @id @default(autoincrement())
+  username   String       @db.VarChar(128)
+  password   String       @db.VarChar(128)
+  nama_admin String       @db.VarChar(128)
+  id_level   Int
+  pembayaran pembayaran[]
+  level      level        @relation(fields: [id_level], references: [id_level], onUpdate: Restrict, map: "user_ibfk_1")
+
+  @@index([id_level], map: "id_level")
+}
